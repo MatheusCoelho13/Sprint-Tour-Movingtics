@@ -2,9 +2,10 @@ import * as THREE from 'three'
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 import { TOUR_URL, type SceneData } from '../types'
 
-// Three CubeTexture espera px,nx,py,ny,pz,nz.
-// Marzipano: frente = -z, direita = +x (mesma convenção yaw/pitch do app.js antigo).
-const THREE_ORDER = 'rludbf'
+// Three CubeTexture espera px,nx,py,ny,pz,nz, mas o background cúbico espelha o x (flipEnvMap=-1):
+// por isso l/r trocam de lugar e u/d giram 180° p/ casar com as faces do Marzipano.
+// Resultado: frente = -z, direita = +x (mesma convenção yaw/pitch dos hotspots).
+const THREE_ORDER = 'lrudbf'
 const RADIUS = 6
 
 const MAX_FACE = 2048 // 6 faces de 2048² ≈ 100 MB de GPU; 4096 estoura memória no Quest
@@ -25,6 +26,7 @@ async function loadLevel(s: SceneData, z: number) {
   const faces = await Promise.all([...THREE_ORDER].map(async (f) => {
     const c = faceCanvas(size)
     const ctx = c.getContext('2d')!
+    if (f === 'u' || f === 'd') ctx.setTransform(-1, 0, 0, -1, size, size) // gira 180°
     await Promise.all(Array.from({ length: n * n }, async (_, i) => {
       const x = i % n, y = Math.floor(i / n)
       ctx.drawImage(await loader.loadAsync(`${TOUR_URL}/tiles/${s.id}/${z}/${f}/${y}/${x}.jpg`), x * tileSize, y * tileSize)

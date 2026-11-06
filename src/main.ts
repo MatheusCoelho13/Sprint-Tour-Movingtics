@@ -1,7 +1,6 @@
 import './style.css'
 import { createTour } from './tour/tour'
 import { toggleGyro } from './tour/gyro'
-import { startCamera } from './media/camera'
 import { TOUR_URL, type TourData } from './types'
 
 const data: TourData = await (await fetch(`${TOUR_URL}/data.json`)).json()
@@ -30,13 +29,4 @@ if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
   if ('requestPermission' in DeviceOrientationEvent) {
     addEventListener('click', (e) => { if (!(e.target as Element).closest('#ui')) btn.click() }, { once: true })
   } else btn.click()
-}
-
-// Câmera (getUserMedia): abre direto, sem botão. Troque pelo seu uso (ex.: captureFrame → API).
-try {
-  const cam = await startCamera()
-  cam.video.id = 'cam'
-  document.body.append(cam.video)
-} catch (err) {
-  console.error('[CAMERA]', err)
 }
