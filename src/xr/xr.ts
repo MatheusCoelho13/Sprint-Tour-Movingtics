@@ -18,11 +18,8 @@ const toCube = (faces: HTMLCanvasElement[]) => {
 }
 const faceCanvas = (size: number) => Object.assign(document.createElement('canvas'), { width: size, height: size })
 
-/** Alta-res: costura os tiles do maior nível <= MAX_FACE. Nível z do Marzipano = índice em levels[]. */
-async function loadSharp(s: SceneData) {
-  let z = 0
-  s.levels.forEach((l, i) => { if (!l.fallbackOnly && l.size <= MAX_FACE) z = i })
-  if (!z) return null
+/** Costura os tiles do nível z (índice em levels[], igual ao Marzipano). */
+async function loadLevel(s: SceneData, z: number) {
   const { size, tileSize } = s.levels[z]
   const n = Math.ceil(size / tileSize)
   const faces = await Promise.all([...THREE_ORDER].map(async (f) => {
@@ -88,11 +85,19 @@ export function initXR(onNavigate: (id: string) => void) {
         mesh.userData.target = h.target
         hotspots.add(mesh)
       }
-      const show = (t: THREE.CubeTexture) => { if (wanted === s.id) scene.background = t } // ignora resposta atrasada
       const hit = cubes.get(s.id)
-      if (hit) return show(hit)
-      const sharp = await loadSharp(s).catch(() => null)
-      if (sharp) { cubes.set(s.id, sharp); show(sharp) }
+      if (hit) { scene.background = hit; return }
+      scene.background = null // não deixa o panorama da cena anterior sob os hotspots novos
+      let sharp = 0
+      s.levels.forEach((l, i) => { if (!l.fallbackOnly && l.size <= MAX_FACE) sharp = i })
+      // 1º um nível leve (aparece rápido), depois o nítido
+      for (const z of new Set([Math.min(1, sharp), sharp])) {
+        try {
+          const t = await loadLevel(s, z)
+          if (z === sharp) cubes.set(s.id, t)
+          if (wanted === s.id) scene.background = t // ignora resposta atrasada
+        } catch (err) { console.error('[XR] falha ao carregar', s.id, 'nível', z, err) }
+      }
     },
   }
 }
