@@ -3,7 +3,7 @@ export interface Camera { video: HTMLVideoElement; stop(): void }
 
 export async function startCamera(
   constraints: MediaStreamConstraints = {
-    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+    video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
     audio: false,
   },
 ): Promise<Camera> {
@@ -18,7 +18,7 @@ export async function startCamera(
 }
 
 /** Frame atual como data URL JPEG, lado maior limitado a maxSize (mantém aspecto). */
-export function captureFrame(video: HTMLVideoElement, maxSize = 1280, quality = 1.8): string {
+export function captureFrame(video: HTMLVideoElement, maxSize = 1920, quality = 1): string {
   const scale = Math.min(1, maxSize / Math.max(video.videoWidth, video.videoHeight))
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(video.videoWidth * scale)
