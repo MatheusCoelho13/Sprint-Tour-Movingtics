@@ -41,6 +41,10 @@ export function initXR(onNavigate: (id: string) => void) {
   const renderer = new THREE.WebGLRenderer({ antialias: true })
   renderer.xr.enabled = true
   renderer.xr.setReferenceSpaceType('local') // cabeça = origem, bate com o cubo/hotspots
+  // Cena é só um skybox, GPU sobra: render mais denso e sem foveation (borda nítida).
+  // ponytail: se travar/aquecer no Quest, baixa p/ 1.2; 1.5 é palpite, calibra no aparelho.
+  renderer.xr.setFramebufferScaleFactor(1.5)
+  renderer.xr.setFoveation(0)
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 100)
   const hotspots = new THREE.Group()
