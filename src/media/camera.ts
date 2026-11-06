@@ -18,7 +18,7 @@ export async function startCamera(
 }
 
 /** Frame atual como data URL JPEG, lado maior limitado a maxSize (mantém aspecto). */
-export function captureFrame(video: HTMLVideoElement, maxSize = 1280, quality = 0.8): string {
+export function captureFrame(video: HTMLVideoElement, maxSize = 1280, quality = 1.8): string {
   const scale = Math.min(1, maxSize / Math.max(video.videoWidth, video.videoHeight))
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(video.videoWidth * scale)
