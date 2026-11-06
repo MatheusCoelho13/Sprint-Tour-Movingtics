@@ -1,7 +1,7 @@
 import './style.css'
 import { createTour } from './tour/tour'
 import { toggleGyro } from './tour/gyro'
-import { startCamera, type Camera } from './media/camera'
+import { startCamera } from './media/camera'
 import { TOUR_URL, type TourData } from './types'
 
 const data: TourData = await (await fetch(`${TOUR_URL}/data.json`)).json()
@@ -12,6 +12,7 @@ const addButton = (label: string, onClick: (b: HTMLButtonElement) => void) => {
   const b = Object.assign(document.createElement('button'), { textContent: label })
   b.addEventListener('click', () => onClick(b))
   ui.append(b)
+  return b
 }
 
 // WebXR (three só é baixado se o aparelho suporta VR imersivo)
@@ -22,27 +23,20 @@ if (await navigator.xr?.isSessionSupported('immersive-vr').catch(() => false)) {
   void xr.setScene(tour.scene)
 }
 
-// Giroscópio (celular)
+// Giroscópio (celular/Quest): roda junto com o arrastar; o botão serve p/ desligar/religar.
 if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-  addButton('📱 Giroscópio', async (b) => b.classList.toggle('on', await toggleGyro(tour)))
+  const btn = addButton('📱 Giroscópio', async (b) => b.classList.toggle('on', await toggleGyro(tour)))
+  // Quest/Android não pedem permissão: liga já na abertura. Só iOS espera o 1º toque.
+  if ('requestPermission' in DeviceOrientationEvent) {
+    addEventListener('click', (e) => { if (!(e.target as Element).closest('#ui')) btn.click() }, { once: true })
+  } else btn.click()
 }
 
-// Câmera (getUserMedia) — exemplo: preview. Troque pelo seu uso (ex.: captureFrame → API).
-let cam: Camera | null = null
-addButton('📷 Câmera', async (b) => {
-  if (cam) {
-    cam.stop()
-    cam.video.remove()
-    cam = null
-    return b.classList.remove('on')
-  }
-  try {
-    cam = await startCamera()
-    cam.video.id = 'cam'
-    document.body.append(cam.video)
-    b.classList.add('on')
-  } catch (err) {
-    console.error('[CAMERA]', err)
-    b.textContent = err instanceof DOMException && err.name === 'NotAllowedError' ? '📷 Permissão negada' : '📷 Erro na câmera'
-  }
-})
+// Câmera (getUserMedia): abre direto, sem botão. Troque pelo seu uso (ex.: captureFrame → API).
+try {
+  const cam = await startCamera()
+  cam.video.id = 'cam'
+  document.body.append(cam.video)
+} catch (err) {
+  console.error('[CAMERA]', err)
+}
